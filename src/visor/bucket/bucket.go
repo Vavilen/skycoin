@@ -156,7 +156,8 @@ func (b *Bucket) RangeUpdate(f func(k, v []byte) ([]byte, error)) error {
 		bkt := tx.Bucket(b.Name)
 		c := bkt.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			v, err := f(k, v)
+			var err error
+			v, err = f(k, v)
 			if err != nil {
 				return err
 			}

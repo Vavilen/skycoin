@@ -138,7 +138,7 @@ func TestDelete(t *testing.T) {
 			bkt, err := New([]byte(fmt.Sprintf("abc%d", rand.Int31n(1024))), db)
 			assert.Nil(t, err)
 			for k, v := range tc.Init {
-				err := bkt.Put([]byte(k), []byte(v))
+				err = bkt.Put([]byte(k), []byte(v))
 				assert.Nil(t, err)
 			}
 

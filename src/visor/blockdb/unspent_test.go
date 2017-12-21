@@ -69,7 +69,7 @@ func TestNewUnspentPool(t *testing.T) {
 func addUxOut(up *Unspents, ux coin.UxOut) error {
 	var uxHash cipher.SHA256
 	var err error
-	if err := up.db.Update(func(tx *bolt.Tx) error {
+	if err = up.db.Update(func(tx *bolt.Tx) error {
 		uxHash, err = up.addWithTx(tx, ux)
 		return err
 	}); err != nil {
@@ -354,7 +354,7 @@ func BenchmarkUnspentPoolGetAll(b *testing.B) {
 
 	for i := 0; i < 1000; i++ {
 		ux := makeUxOut(&t)
-		if err := addUxOut(up, ux); err != nil {
+		if err = addUxOut(up, ux); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -443,13 +443,15 @@ func TestUnspentPoolDeleteWithTx(t *testing.T) {
 				}
 
 				// meta := unspentMeta{tx.Bucket(up.meta.Name)}
-				xorhash, err := up.meta.getXorHashWithTx(tx)
+				var xorhash cipher.SHA256
+				xorhash, err = up.meta.getXorHashWithTx(tx)
 				assert.Nil(t, err)
 
 				assert.Equal(t, tc.xorhash, xorhash)
 
 				for _, hash := range tc.deleteHashes {
-					_, ok, err := up.pool.getWithTx(tx, hash)
+					var ok bool
+					_, ok, err = up.pool.getWithTx(tx, hash)
 					assert.Nil(t, err)
 					assert.False(t, ok)
 				}

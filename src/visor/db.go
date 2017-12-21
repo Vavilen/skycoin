@@ -35,7 +35,7 @@ func loadBlockchain(db *bolt.DB, pubkey cipher.PubKey, arbitrating bool) (*bolt.
 	dbPath := db.Path()
 
 	logger.Critical("Block database signature missing, recreating db: %v", err)
-	if err := db.Close(); err != nil {
+	if err = db.Close(); err != nil {
 		return nil, nil, fmt.Errorf("failed to close db: %v", err)
 	}
 

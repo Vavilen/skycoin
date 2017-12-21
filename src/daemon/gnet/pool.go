@@ -381,11 +381,11 @@ func (pool *ConnectionPool) handleConnection(conn net.Conn, solicited bool) {
 
 	select {
 	case <-pool.quit:
-		if err := conn.Close(); err != nil {
+		if err = conn.Close(); err != nil {
 			logger.Error("conn.Close() error: %v", err)
 		}
 	case err = <-errC:
-		if err := pool.Disconnect(c.Addr(), err); err != nil {
+		if err = pool.Disconnect(c.Addr(), err); err != nil {
 			logger.Error("Disconnect failed: %v", err)
 		}
 	}
@@ -422,7 +422,7 @@ func (pool *ConnectionPool) readLoop(conn *Connection, msgChan chan []byte, qc c
 		}
 
 		// write data to buffer
-		if _, err := conn.Buffer.Write(data); err != nil {
+		if _, err = conn.Buffer.Write(data); err != nil {
 			return err
 		}
 		// decode data

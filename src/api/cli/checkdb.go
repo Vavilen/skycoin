@@ -38,7 +38,7 @@ func checkdb(c *gcli.Context) error {
 	}
 
 	// check if this file is exist
-	if _, err := os.Stat(dbpath); os.IsNotExist(err) {
+	if _, err = os.Stat(dbpath); os.IsNotExist(err) {
 		return fmt.Errorf("db file: %v does not exist", dbpath)
 	}
 

@@ -778,8 +778,8 @@ func TestProcessTransactions(t *testing.T) {
 			for i, spend := range tc.initChain {
 				uxs := coin.CreateUnspents(head.Head, head.Body.Transactions[spend.TxIndex])
 				tx := makeSpendTx(t, coin.UxArray{uxs[spend.UxIndex]}, spend.Keys, spend.ToAddr, spend.Coins)
-
-				b, err := bc.NewBlock(coin.Transactions{tx}, tm+uint64(i*100))
+				var b *coin.Block
+				b, err = bc.NewBlock(coin.Transactions{tx}, tm+uint64(i*100))
 				require.NoError(t, err)
 
 				sb := &coin.SignedBlock{

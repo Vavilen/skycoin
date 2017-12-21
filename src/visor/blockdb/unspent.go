@@ -230,7 +230,7 @@ func (up *Unspents) addWithTx(tx *bolt.Tx, ux coin.UxOut) (uxhash cipher.SHA256,
 	}
 
 	xorhash = xorhash.Xor(ux.SnapshotHash())
-	if err := up.meta.setXorHashWithTx(tx, xorhash); err != nil {
+	if err = up.meta.setXorHashWithTx(tx, xorhash); err != nil {
 		return cipher.SHA256{}, err
 	}
 

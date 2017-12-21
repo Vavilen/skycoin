@@ -179,21 +179,21 @@ func TestProcessGenesisBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := hisDB.ParseBlock(&gb); err != nil {
+	if err = hisDB.ParseBlock(&gb); err != nil {
 		t.Fatal(err)
 	}
 
 	// check transactions bucket.
 	var tx Transaction
 	txHash := gb.Body.Transactions[0].Hash()
-	if err := getBucketValue(db, transactionBkt, txHash[:], &tx); err != nil {
+	if err = getBucketValue(db, transactionBkt, txHash[:], &tx); err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, tx.Tx, gb.Body.Transactions[0])
 
 	// check address in
 	outID := []cipher.SHA256{}
-	if err := getBucketValue(db, addressInBkt, genAddress.Bytes(), &outID); err != nil {
+	if err = getBucketValue(db, addressInBkt, genAddress.Bytes(), &outID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -395,7 +395,8 @@ func addBlock(bc *fakeBlockchain, td testData, tm uint64) (*coin.Block, *coin.Tr
 
 	tx.PushInput(ux.Hash())
 	for _, o := range td.Vouts {
-		addr, err := cipher.DecodeBase58Address(o.ToAddr)
+		var addr cipher.Address
+		addr, err = cipher.DecodeBase58Address(o.ToAddr)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -405,7 +406,7 @@ func addBlock(bc *fakeBlockchain, td testData, tm uint64) (*coin.Block, *coin.Tr
 	sigKey := cipher.MustSecKeyFromHex(td.Vin.SigKey)
 	tx.SignInputs([]cipher.SecKey{sigKey})
 	tx.UpdateHeader()
-	if err := bc.VerifyTransaction(tx); err != nil {
+	if err = bc.VerifyTransaction(tx); err != nil {
 		return nil, nil, err
 	}
 	preBlock := bc.GetBlock(td.PreBlockHash)

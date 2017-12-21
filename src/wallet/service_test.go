@@ -92,7 +92,7 @@ func TestNewService(t *testing.T) {
 	// check if the default wallet file is created
 	for name := range s.wallets {
 		wltFile := filepath.Join(dir, name)
-		_, err := os.Stat(wltFile)
+		_, err = os.Stat(wltFile)
 		require.NoError(t, err)
 		break
 	}

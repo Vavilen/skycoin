@@ -93,7 +93,7 @@ func AddPrivateKeyToFile(walletFile, key string) error {
 		return WalletLoadError(err)
 	}
 
-	if err := AddPrivateKey(wlt, key); err != nil {
+	if err = AddPrivateKey(wlt, key); err != nil {
 		return err
 	}
 

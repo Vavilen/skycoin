@@ -80,7 +80,8 @@ func coinSupply(gateway *daemon.Gateway, w http.ResponseWriter, r *http.Request)
 
 	var unlockedSupply uint64
 	for _, u := range unlockedOutputs.HeadOutputs {
-		coins, err := droplet.FromString(u.Coins)
+		var coins uint64
+		coins, err = droplet.FromString(u.Coins)
 		if err != nil {
 			logger.Error("Invalid unlocked output balance string %s: %v", u.Coins, err)
 			wh.Error500(w)

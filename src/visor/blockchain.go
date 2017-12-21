@@ -298,7 +298,7 @@ func (bc Blockchain) VerifyTransaction(tx coin.Transaction) error {
 	}
 	// Checks whether ux inputs exist,
 	// Check that signatures are allowed to spend inputs
-	if err := tx.VerifyInput(uxIn); err != nil {
+	if err = tx.VerifyInput(uxIn); err != nil {
 		return err
 	}
 

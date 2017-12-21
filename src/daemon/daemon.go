@@ -17,6 +17,7 @@ import (
 	"github.com/skycoin/skycoin/src/daemon/gnet"
 	"github.com/skycoin/skycoin/src/daemon/pex"
 
+	"github.com/skycoin/skycoin/src/coin"
 	"github.com/skycoin/skycoin/src/util/elapse"
 	"github.com/skycoin/skycoin/src/util/logging"
 	"github.com/skycoin/skycoin/src/util/utc"
@@ -411,7 +412,7 @@ loop:
 			}
 
 			m := NewGetPeersMessage()
-			if err := dm.Pool.Pool.BroadcastMessage(m); err != nil {
+			if err = dm.Pool.Pool.BroadcastMessage(m); err != nil {
 				logger.Error("%v", err)
 			}
 
@@ -502,7 +503,8 @@ loop:
 			// Create blocks, if master chain
 			elapser.Register("blockCreationTicker.C")
 			if dm.Visor.Config.Config.IsMaster {
-				sb, err := dm.Visor.CreateAndPublishBlock(dm.Pool)
+				var sb coin.SignedBlock
+				sb, err = dm.Visor.CreateAndPublishBlock(dm.Pool)
 				if err != nil {
 					logger.Error("Failed to create block: %v", err)
 					continue

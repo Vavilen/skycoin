@@ -242,7 +242,7 @@ func TestVisorCreateBlock(t *testing.T) {
 	foundInvalidCoins := false
 	for _, txn := range txns {
 		for _, o := range txn.Out {
-			if err := DropletPrecisionCheck(o.Coins); err != nil {
+			if err = DropletPrecisionCheck(o.Coins); err != nil {
 				foundInvalidCoins = true
 				break
 			}
@@ -252,7 +252,7 @@ func TestVisorCreateBlock(t *testing.T) {
 
 	// Inject transactions into the unconfirmed pool
 	for _, txn := range txns {
-		known, err := unconfirmed.InjectTxn(bc, txn)
+		known, err = unconfirmed.InjectTxn(bc, txn)
 		require.False(t, known)
 		require.NoError(t, err)
 	}

@@ -872,7 +872,7 @@ func (e *encoder) value(v reflect.Value) {
 		t := v.Type()
 		for i := 0; i < v.NumField(); i++ {
 			// see comment for corresponding code in decoder.value()
-			v := v.Field(i)
+			v = v.Field(i)
 			f := t.Field(i)
 			if f.Tag.Get("enc") != "-" {
 				if v.CanSet() || f.Name != "_" {
