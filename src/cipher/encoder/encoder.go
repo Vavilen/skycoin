@@ -872,11 +872,11 @@ func (e *encoder) value(v reflect.Value) {
 		t := v.Type()
 		for i := 0; i < v.NumField(); i++ {
 			// see comment for corresponding code in decoder.value()
-			v = v.Field(i)
+			val := v.Field(i)
 			f := t.Field(i)
 			if f.Tag.Get("enc") != "-" {
-				if v.CanSet() || f.Name != "_" {
-					e.value(v)
+				if val.CanSet() || f.Name != "_" {
+					e.value(val)
 				} else {
 					//dont write anything
 					//e.skip(v)
