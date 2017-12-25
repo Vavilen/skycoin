@@ -17,8 +17,6 @@ type BlockchainParser struct {
 	quit      chan struct{}
 	done      chan struct{}
 	bc        *Blockchain
-
-	isStart bool
 }
 
 // NewBlockchainParser create and init the parser instance.
