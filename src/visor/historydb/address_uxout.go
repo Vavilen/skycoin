@@ -26,7 +26,10 @@ func newAddressUxBkt(db *bolt.DB) (*addressUx, error) {
 // Get return nil on not found.
 func (au *addressUx) Get(address cipher.Address) ([]cipher.SHA256, error) {
 	uxHashes := []cipher.SHA256{}
-	bin := au.bkt.Get(address.Bytes())
+	bin, err := au.bkt.Get(address.Bytes())
+	if err != nil {
+		return nil, err
+	}
 	if bin == nil {
 		return nil, nil
 	}
@@ -60,7 +63,7 @@ func (au *addressUx) Add(address cipher.Address, uxHash cipher.SHA256) error {
 }
 
 // IsEmpty checks if the addressUx bucket is empty
-func (au *addressUx) IsEmpty() bool {
+func (au *addressUx) IsEmpty() (bool, error) {
 	return au.bkt.IsEmpty()
 }
 

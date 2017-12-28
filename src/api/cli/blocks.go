@@ -30,7 +30,9 @@ func getBlocks(c *gcli.Context) error {
 	}
 
 	if start == "" {
-		gcli.ShowSubcommandHelp(c)
+		if err := gcli.ShowSubcommandHelp(c); err != nil {
+			return err
+		}
 		return nil
 	}
 

@@ -75,7 +75,10 @@ func (ux *UxOuts) Set(out UxOut) error {
 
 // Get gets UxOut of given id
 func (ux *UxOuts) Get(uxID cipher.SHA256) (*UxOut, error) {
-	bin := ux.bkt.Get(uxID[:])
+	bin, err := ux.bkt.Get(uxID[:])
+	if err != nil {
+		return nil, err
+	}
 	if bin == nil {
 		return nil, nil
 	}
@@ -89,7 +92,7 @@ func (ux *UxOuts) Get(uxID cipher.SHA256) (*UxOut, error) {
 }
 
 // IsEmpty checks if the uxout bucekt is empty
-func (ux *UxOuts) IsEmpty() bool {
+func (ux *UxOuts) IsEmpty() (bool, error) {
 	return ux.bkt.IsEmpty()
 }
 

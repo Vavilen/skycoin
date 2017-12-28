@@ -33,7 +33,9 @@ func addPrivateKeyCmd(cfg Config) gcli.Command {
 			// get private key
 			skStr := c.Args().First()
 			if skStr == "" {
-				gcli.ShowSubcommandHelp(c)
+				if err := gcli.ShowSubcommandHelp(c); err != nil {
+					return err
+				}
 				return nil
 			}
 

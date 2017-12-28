@@ -155,7 +155,9 @@ func (conn *Connection) String() string {
 
 // Close close the connection and write queue
 func (conn *Connection) Close() {
-	conn.Conn.Close()
+	if err := conn.Conn.Close(); err != nil {
+		logger.Warning("Failed close pool connection: %v", err)
+	}
 	close(conn.WriteQueue)
 	conn.WriteQueue = nil
 	conn.Buffer = &bytes.Buffer{}
@@ -268,7 +270,9 @@ func (pool *ConnectionPool) Shutdown() {
 	close(pool.quit)
 
 	if pool.listener != nil {
-		pool.listener.Close()
+		if err := pool.listener.Close(); err != nil {
+			logger.Warning("Failed Shutdown pool listener: %v", err)
+		}
 	}
 
 	pool.listener = nil
@@ -766,7 +770,9 @@ func (pool *ConnectionPool) ClearStaleConnections(idleLimit time.Duration, reaso
 	}
 
 	for _, a := range idleConns {
-		pool.Disconnect(a, reason)
+		if err := pool.Disconnect(a, reason); err != nil {
+			return err
+		}
 	}
 	return nil
 }

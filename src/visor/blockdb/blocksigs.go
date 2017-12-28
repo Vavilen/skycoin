@@ -40,7 +40,10 @@ func NewBlockSigs(db *bolt.DB) (*blockSigs, error) {
 
 // Get returns signature of specific block
 func (bs blockSigs) Get(hash cipher.SHA256) (cipher.Sig, bool, error) {
-	bin := bs.Sigs.Get(hash[:])
+	bin, err := bs.Sigs.Get(hash[:])
+	if err != nil {
+		return cipher.Sig{}, false, err
+	}
 	if bin == nil {
 		return cipher.Sig{}, false, nil
 	}

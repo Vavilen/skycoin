@@ -30,11 +30,16 @@ func NewBlockchainMetadata(v *Visor) BlockchainMetadata {
 		logger.Error("%v", err)
 		return BlockchainMetadata{}
 	}
-
+	var len int
+	len, err = v.Unconfirmed.Len()
+	if err != nil {
+		logger.Error("%v", err)
+		return BlockchainMetadata{}
+	}
 	return BlockchainMetadata{
 		Head:        NewReadableBlockHeader(&head.Head),
 		Unspents:    v.Blockchain.Unspent().Len(),
-		Unconfirmed: uint64(v.Unconfirmed.Len()),
+		Unconfirmed: uint64(len),
 	}
 }
 

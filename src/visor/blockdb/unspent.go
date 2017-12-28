@@ -377,7 +377,11 @@ func (up *Unspents) GetUxHash() cipher.SHA256 {
 }
 
 func (up *Unspents) getUxHashFromDB() (cipher.SHA256, error) {
-	if v := up.meta.Get(xorhashKey); v != nil {
+	v, err := up.meta.Get(xorhashKey)
+	if err != nil {
+		return cipher.SHA256{}, err
+	}
+	if v != nil {
 		var hash cipher.SHA256
 		copy(hash[:], v[:])
 		return hash, nil

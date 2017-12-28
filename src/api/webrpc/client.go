@@ -148,7 +148,11 @@ func Do(req *Request, rpcAddress string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rsp.Body.Close()
+	defer func() {
+		if errDefer := rsp.Body.Close(); errDefer != nil {
+			logger.Warning("Failed rsp.Body.Close: %v", errDefer)
+		}
+	}()
 	res := Response{}
 	if err := json.NewDecoder(rsp.Body).Decode(&res); err != nil {
 		return nil, err

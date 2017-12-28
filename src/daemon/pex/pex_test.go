@@ -199,7 +199,9 @@ func TestValidateAddress(t *testing.T) {
 func TestNewPex(t *testing.T) {
 	dir, err := ioutil.TempDir("", "peerlist")
 	require.NoError(t, err)
-	defer os.Remove(dir)
+	defer func() {
+		require.NoError(t, os.Remove(dir))
+	}()
 
 	// defer removeFile()
 	config := NewConfig()
@@ -275,7 +277,9 @@ func TestPexLoadPeers(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			dir, err := ioutil.TempDir("", "peerlist")
 			require.NoError(t, err)
-			defer os.Remove(dir)
+			defer func() {
+				require.NoError(t, os.Remove(dir))
+			}()
 
 			// write peers to file
 			fn := filepath.Join(dir, PeerDatabaseFilename)

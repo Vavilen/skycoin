@@ -21,7 +21,10 @@ func requireFileMode(t *testing.T, filename string, mode os.FileMode) {
 
 func requireFileContentsBinary(t *testing.T, filename string, contents []byte) {
 	f, err := os.Open(filename)
-	defer f.Close()
+	defer func() {
+		err := f.Close()
+		require.NoError(t, err)
+	}()
 	require.Nil(t, err)
 	b := make([]byte, len(contents)*16)
 	n, err := f.Read(b)
@@ -47,10 +50,14 @@ func requireFileNotExists(t *testing.T, filename string) {
 	require.True(t, os.IsNotExist(err))
 }
 
-func cleanup(fn string) {
-	os.Remove(fn)
-	os.Remove(fn + ".tmp")
-	os.Remove(fn + ".bak")
+func cleanup(t *testing.T, fn string) {
+	var err error
+	err = os.Remove(fn)
+	require.NoError(t, err)
+	err = os.Remove(fn + ".tmp")
+	require.NoError(t, err)
+	err = os.Remove(fn + ".bak")
+	require.NoError(t, err)
 }
 
 func TestBuildDataDir(t *testing.T) {
@@ -95,7 +102,7 @@ func TestUserHome(t *testing.T) {
 func TestLoadJSON(t *testing.T) {
 	obj := struct{ Key string }{}
 	fn := "test.json"
-	defer cleanup(fn)
+	defer cleanup(t, fn)
 
 	// Loading nonexistant file
 	requireFileNotExists(t, fn)
@@ -107,8 +114,8 @@ func TestLoadJSON(t *testing.T) {
 	require.Nil(t, err)
 	_, err = f.WriteString("{\"key\":\"value\"}")
 	require.Nil(t, err)
-	f.Close()
-
+	err = f.Close()
+	require.NoError(t, err)
 	err = LoadJSON(fn, &obj)
 	require.Nil(t, err)
 	require.Equal(t, obj.Key, "value")
@@ -116,7 +123,7 @@ func TestLoadJSON(t *testing.T) {
 
 func TestSaveJSON(t *testing.T) {
 	fn := "test.json"
-	defer cleanup(fn)
+	defer cleanup(t, fn)
 	obj := struct {
 		Key string `json:"key"`
 	}{Key: "value"}
@@ -149,7 +156,7 @@ func TestSaveJSON(t *testing.T) {
 
 func TestSaveJSONSafe(t *testing.T) {
 	fn := "test.json"
-	defer cleanup(fn)
+	defer cleanup(t, fn)
 	obj := struct {
 		Key string `json:"key"`
 	}{Key: "value"}
@@ -175,10 +182,11 @@ func TestSaveJSONSafe(t *testing.T) {
 
 func TestSaveBinary(t *testing.T) {
 	fn := "test.bin"
-	defer cleanup(fn)
+	defer cleanup(t, fn)
 	b := make([]byte, 128)
-	rand.Read(b)
-	err := SaveBinary(fn, b, 0644)
+	_, err := rand.Read(b)
+	require.NoError(t, err)
+	err = SaveBinary(fn, b, 0644)
 	require.Nil(t, err)
 	requireFileNotExists(t, fn+".tmp")
 	requireFileNotExists(t, fn+".bak")
@@ -187,7 +195,8 @@ func TestSaveBinary(t *testing.T) {
 	requireFileMode(t, fn, 0644)
 
 	b2 := make([]byte, 128)
-	rand.Read(b2)
+	_, err = rand.Read(b2)
+	require.NoError(t, err)
 	require.False(t, bytes.Equal(b, b2))
 
 	err = SaveBinary(fn, b2, 0644)

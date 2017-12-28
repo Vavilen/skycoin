@@ -17,8 +17,6 @@ type BlockchainParser struct {
 	quit      chan struct{}
 	done      chan struct{}
 	bc        *Blockchain
-
-	isStart bool
 }
 
 // NewBlockchainParser create and init the parser instance.
@@ -78,8 +76,10 @@ func (bcp *BlockchainParser) Shutdown() {
 }
 
 func (bcp *BlockchainParser) parseTo(bcHeight uint64) error {
-	parsedHeight := bcp.historyDB.ParsedHeight()
-
+	parsedHeight, err := bcp.historyDB.ParsedHeight()
+	if err != nil {
+		return err
+	}
 	for i := int64(0); i < int64(bcHeight)-parsedHeight; i++ {
 		b, err := bcp.bc.GetBlockBySeq(uint64(parsedHeight + i + 1))
 		if err != nil {

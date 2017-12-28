@@ -27,7 +27,12 @@ const (
 func readAll(t *testing.T, f string) []byte {
 	fi, err := os.Open(f)
 	require.NoError(t, err)
-	defer fi.Close()
+	defer func() {
+		err = fi.Close()
+		if err != nil {
+			t.Logf("Fail close db file: %s , err: %v", f, err)
+		}
+	}()
 
 	b, err := ioutil.ReadAll(fi)
 	require.NoError(t, err)
@@ -47,7 +52,12 @@ func writeDBFile(t *testing.T, badDBFile string, badDBData []byte) {
 	t.Logf("Writing the original bad db file back to %s", badDBFile)
 	fi, err := os.OpenFile(badDBFile, os.O_WRONLY, 0600)
 	require.NoError(t, err)
-	defer fi.Close()
+	defer func() {
+		err = fi.Close()
+		if err != nil {
+			t.Logf("Fail close db file: %s , err: %v", badDBFile, err)
+		}
+	}()
 
 	_, err = io.Copy(fi, bytes.NewBuffer(badDBData))
 	require.NoError(t, err)
@@ -192,7 +202,9 @@ func TestVisorCreateBlock(t *testing.T) {
 	sb, err := v.CreateAndExecuteBlock()
 	require.NoError(t, err)
 	require.Equal(t, 1, len(sb.Body.Transactions))
-	require.Equal(t, 0, unconfirmed.Len())
+	l, err := unconfirmed.Len()
+	require.NoError(t, err)
+	require.Equal(t, 0, l)
 	v.Config.MaxBlockSize = 1024 * 4
 
 	// Create various transactions and add them to unconfirmed pool
@@ -345,7 +357,9 @@ func TestVisorInjectTransaction(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(sb.Body.Transactions))
 	require.Equal(t, 2, len(sb.Body.Transactions[0].Out))
-	require.Equal(t, 0, unconfirmed.Len())
+	len, err := unconfirmed.Len()
+	require.NoError(t, err)
+	require.Equal(t, 0, len)
 	require.Equal(t, uint64(2), bc.Len())
 
 	// Create a transaction with invalid decimal places
@@ -355,7 +369,9 @@ func TestVisorInjectTransaction(t *testing.T) {
 	txn = makeSpendTx(t, uxs, []cipher.SecKey{genSecret, genSecret}, toAddr, invalidCoins)
 	_, err = v.InjectTxn(txn)
 	testutil.RequireError(t, err, ErrInvalidDecimals.Error())
-	require.Equal(t, 0, unconfirmed.Len())
+	len, err = unconfirmed.Len()
+	require.NoError(t, err)
+	require.Equal(t, 0, len)
 }
 
 func TestVisorCalculatePrecision(t *testing.T) {

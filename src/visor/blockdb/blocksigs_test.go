@@ -22,11 +22,12 @@ func TestNewBlockSigs(t *testing.T) {
 	// check the bucket
 	require.NotNil(t, sigs.Sigs)
 
-	db.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(blockSigsBkt)
 		require.NotNil(t, bkt)
 		return nil
 	})
+	require.NoError(t, err)
 }
 
 func TestBlockSigsGet(t *testing.T) {
@@ -87,7 +88,7 @@ func TestBlockSigsGet(t *testing.T) {
 			defer closeDB()
 
 			// init db
-			db.Update(func(tx *bolt.Tx) error {
+			err := db.Update(func(tx *bolt.Tx) error {
 				bkt, err := tx.CreateBucketIfNotExists(blockSigsBkt)
 				require.NoError(t, err)
 				for _, hs := range tc.init {
@@ -96,7 +97,7 @@ func TestBlockSigsGet(t *testing.T) {
 				}
 				return nil
 			})
-
+			require.NoError(t, err)
 			sigs, err := NewBlockSigs(db)
 			require.NoError(t, err)
 			sg, ok, err := sigs.Get(tc.hash)
@@ -120,12 +121,12 @@ func TestBlockSigsAddWithTx(t *testing.T) {
 	sigs, err := NewBlockSigs(db)
 	require.NoError(t, err)
 
-	db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		return sigs.AddWithTx(tx, h, sig)
 	})
-
+	require.NoError(t, err)
 	// check the db
-	db.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(blockSigsBkt)
 		v := bkt.Get(h[:])
 		require.NotNil(t, v)
@@ -135,4 +136,5 @@ func TestBlockSigsAddWithTx(t *testing.T) {
 		require.Equal(t, sig, s)
 		return nil
 	})
+	require.NoError(t, err)
 }

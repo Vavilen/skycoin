@@ -63,7 +63,10 @@ func (txs *transactions) Add(t *Transaction) error {
 
 // Get get transaction by tx hash, return nil on not found.
 func (txs *transactions) Get(hash cipher.SHA256) (*Transaction, error) {
-	bin := txs.bkt.Get(hash[:])
+	bin, err := txs.bkt.Get(hash[:])
+	if err != nil {
+		return nil, err
+	}
 	if bin == nil {
 		return nil, nil
 	}
@@ -84,7 +87,10 @@ func (txs *transactions) GetSlice(hashes []cipher.SHA256) ([]Transaction, error)
 		keys = append(keys, hashes[i][:])
 	}
 
-	vs := txs.bkt.GetSlice(keys)
+	vs, err := txs.bkt.GetSlice(keys)
+	if err != nil {
+		return nil, err
+	}
 	txns := make([]Transaction, 0, len(vs))
 	for i := range vs {
 		var tx Transaction
@@ -98,7 +104,7 @@ func (txs *transactions) GetSlice(hashes []cipher.SHA256) ([]Transaction, error)
 }
 
 // IsEmpty checks if transaction bucket is empty
-func (txs *transactions) IsEmpty() bool {
+func (txs *transactions) IsEmpty() (bool, error) {
 	return txs.bkt.IsEmpty()
 }
 

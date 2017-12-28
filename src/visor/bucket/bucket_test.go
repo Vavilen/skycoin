@@ -47,7 +47,8 @@ func TestBktUpdate(t *testing.T) {
 		for k, v := range tc.Init {
 			d, err := json.Marshal(v)
 			assert.Nil(t, err)
-			bkt.Put([]byte(k), d)
+			err = bkt.Put([]byte(k), d)
+			assert.Nil(t, err)
 		}
 
 		// update value
@@ -69,9 +70,10 @@ func TestBktUpdate(t *testing.T) {
 
 		// check the updated value
 		for k, v := range tc.UpdateAge {
-			val := bkt.Get([]byte(k))
+			val, err := bkt.Get([]byte(k))
+			assert.Nil(t, err)
 			var p person
-			err := json.NewDecoder(bytes.NewReader(val)).Decode(&p)
+			err = json.NewDecoder(bytes.NewReader(val)).Decode(&p)
 			assert.Nil(t, err)
 			assert.Equal(t, v, p.Age)
 		}
@@ -88,18 +90,22 @@ func TestReset(t *testing.T) {
 	assert.Nil(t, bkt.Put([]byte("k1"), []byte("v1")))
 
 	assert.Nil(t, bkt.Put([]byte("k2"), []byte("v2")))
-
-	assert.Equal(t, []byte("v1"), bkt.Get([]byte("k1")))
-	assert.Equal(t, []byte("v2"), bkt.Get([]byte("k2")))
+	v, err := bkt.Get([]byte("k1"))
+	assert.Nil(t, err)
+	assert.Equal(t, []byte("v1"), v)
+	v, err = bkt.Get([]byte("k2"))
+	assert.Equal(t, []byte("v2"), err)
 
 	assert.Nil(t, bkt.Reset())
 
-	v1 := bkt.Get([]byte("k1"))
+	v1, err := bkt.Get([]byte("k1"))
+	assert.Nil(t, err)
 	if v1 != nil {
 		t.Fatal("bucket reset failed")
 	}
 
-	v2 := bkt.Get([]byte("k2"))
+	v2, err := bkt.Get([]byte("k2"))
+	assert.Nil(t, err)
 	if v2 != nil {
 		t.Fatal("bucket reset failed")
 	}
@@ -146,7 +152,8 @@ func TestDelete(t *testing.T) {
 			assert.Equal(t, tc.Err, err)
 
 			// check if this value is deleted
-			v := bkt.Get([]byte(tc.Del))
+			v, err := bkt.Get([]byte(tc.Del))
+			assert.Nil(t, err)
 			assert.Nil(t, v)
 		})
 	}
@@ -172,11 +179,12 @@ func TestGetAll(t *testing.T) {
 		assert.Nil(t, err)
 		// init bkt
 		for k, v := range tc.init {
-			bkt.Put([]byte(k), []byte(v))
+			err = bkt.Put([]byte(k), []byte(v))
 		}
-
+		assert.Nil(t, err)
 		// get all
-		vs := bkt.GetAll()
+		vs, err := bkt.GetAll()
+		assert.Nil(t, err)
 		for k, v := range vs {
 			assert.Equal(t, string(v), tc.init[k.(string)])
 		}
@@ -208,17 +216,21 @@ func TestRangeUpdate(t *testing.T) {
 		bkt, err := New([]byte(fmt.Sprintf("asd%d", rand.Int31n(1024))), db)
 		assert.Nil(t, err)
 		for k, v := range tc.init {
-			bkt.Put([]byte(k), []byte(v))
+			err = bkt.Put([]byte(k), []byte(v))
+			assert.Nil(t, err)
 		}
 
 		// range update
-		bkt.RangeUpdate(func(k, v []byte) ([]byte, error) {
+		err = bkt.RangeUpdate(func(k, v []byte) ([]byte, error) {
 			return []byte(tc.up[string(k)]), nil
 		})
+		assert.Nil(t, err)
 
 		// check if the value has been updated
 		for k, v := range tc.up {
-			assert.Equal(t, []byte(v), bkt.Get([]byte(k)))
+			vv, err := bkt.Get([]byte(k))
+			assert.Nil(t, err)
+			assert.Equal(t, []byte(v), vv)
 		}
 	}
 }
@@ -269,10 +281,12 @@ func TestIsExsit(t *testing.T) {
 
 		// init the bucket
 		for k, v := range tc.init {
-			bkt.Put([]byte(k), []byte(v))
+			err = bkt.Put([]byte(k), []byte(v))
+			assert.Nil(t, err)
 		}
-
-		assert.Equal(t, tc.exist, bkt.IsExist([]byte(tc.k)))
+		isExist, err := bkt.IsExist([]byte(tc.k))
+		assert.Nil(t, err)
+		assert.Equal(t, tc.exist, isExist)
 	}
 }
 
@@ -297,16 +311,17 @@ func TestForEach(t *testing.T) {
 		bkt, err := New([]byte(fmt.Sprintf("fasd%d", rand.Int31n(1024))), db)
 		assert.Nil(t, err)
 		for k, v := range tc.init {
-			bkt.Put([]byte(k), []byte(v))
+			err = bkt.Put([]byte(k), []byte(v))
+			assert.Nil(t, err)
 		}
 
 		var count int
-		bkt.ForEach(func(k, v []byte) error {
+		err = bkt.ForEach(func(k, v []byte) error {
 			count++
 			assert.Equal(t, string(v), tc.init[string(k)])
 			return nil
 		})
-
+		assert.Nil(t, err)
 		assert.Equal(t, len(tc.init), count)
 	}
 }
@@ -343,10 +358,13 @@ func TestLen(t *testing.T) {
 		bkt, err := New([]byte(fmt.Sprintf("adsf%d", rand.Int31n(1024))), db)
 		assert.Nil(t, err)
 		for k, v := range tc.data {
-			bkt.Put([]byte(k), []byte(v))
+			err = bkt.Put([]byte(k), []byte(v))
+			assert.Nil(t, err)
 		}
-
-		assert.Equal(t, tc.len, bkt.Len())
+		var l int
+		l, err = bkt.Len()
+		assert.Nil(t, err)
+		assert.Equal(t, tc.len, l)
 	}
 }
 
@@ -356,13 +374,21 @@ func TestBucketIsEmpty(t *testing.T) {
 
 	bkt, err := New([]byte("bkt1"), db)
 	require.Nil(t, err)
-
-	require.True(t, bkt.IsEmpty())
+	var isEmpty bool
+	isEmpty, err = bkt.IsEmpty()
+	require.Nil(t, err)
+	require.True(t, isEmpty)
 
 	require.Nil(t, bkt.Put([]byte("k1"), []byte("v1")))
 
-	require.False(t, bkt.IsEmpty())
+	require.Nil(t, err)
+	isEmpty, err = bkt.IsEmpty()
+	require.Nil(t, err)
+	require.False(t, isEmpty)
 
-	bkt.Reset()
-	require.True(t, bkt.IsEmpty())
+	err = bkt.Reset()
+	require.Nil(t, err)
+	isEmpty, err = bkt.IsEmpty()
+	require.Nil(t, err)
+	require.True(t, isEmpty)
 }

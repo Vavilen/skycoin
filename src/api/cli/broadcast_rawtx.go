@@ -16,7 +16,9 @@ func broadcastTxCmd() gcli.Command {
 		Action: func(c *gcli.Context) error {
 			rawtx := c.Args().First()
 			if rawtx == "" {
-				gcli.ShowSubcommandHelp(c)
+				if err := gcli.ShowSubcommandHelp(c); err != nil {
+					return err
+				}
 				return nil
 			}
 

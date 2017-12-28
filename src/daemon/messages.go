@@ -251,10 +251,14 @@ func (intro *IntroductionMessage) Handle(mc *gnet.MessageContext, daemon interfa
 	d := daemon.(*Daemon)
 
 	err := func() error {
+		var err error
 		// Disconnect if this is a self connection (we have the same mirror value)
 		if intro.Mirror == d.Messages.Mirror {
 			logger.Info("Remote mirror value %v matches ours", intro.Mirror)
-			d.Pool.Pool.Disconnect(mc.Addr, ErrDisconnectSelf)
+			err = d.Pool.Pool.Disconnect(mc.Addr, ErrDisconnectSelf)
+			if err != nil {
+				logger.Warning("Failed Disconnect from address %s, err: %v", mc.Addr, err)
+			}
 			return ErrDisconnectSelf
 
 		}
@@ -263,7 +267,10 @@ func (intro *IntroductionMessage) Handle(mc *gnet.MessageContext, daemon interfa
 		if intro.Version != d.Config.Version {
 			logger.Info("%s has different version %d. Disconnecting.",
 				mc.Addr, intro.Version)
-			d.Pool.Pool.Disconnect(mc.Addr, ErrDisconnectInvalidVersion)
+			err = d.Pool.Pool.Disconnect(mc.Addr, ErrDisconnectInvalidVersion)
+			if err != nil {
+				logger.Warning("Failed Disconnect from address %s, err: %v", mc.Addr, err)
+			}
 			return ErrDisconnectInvalidVersion
 		}
 
@@ -276,7 +283,10 @@ func (intro *IntroductionMessage) Handle(mc *gnet.MessageContext, daemon interfa
 			// This should never happen, but the program should still work if it
 			// does.
 			logger.Error("Invalid Addr() for connection: %s", mc.Addr)
-			d.Pool.Pool.Disconnect(mc.Addr, ErrDisconnectOtherError)
+			err = d.Pool.Pool.Disconnect(mc.Addr, ErrDisconnectOtherError)
+			if err != nil {
+				logger.Warning("Failed Disconnect from address %s, err: %v", mc.Addr, err)
+			}
 			return ErrDisconnectOtherError
 		}
 
@@ -294,7 +304,10 @@ func (intro *IntroductionMessage) Handle(mc *gnet.MessageContext, daemon interfa
 		knownPort, exists := d.getMirrorPort(mc.Addr, intro.Mirror)
 		if exists {
 			logger.Info("%s is already connected on port %d", mc.Addr, knownPort)
-			d.Pool.Pool.Disconnect(mc.Addr, ErrDisconnectConnectedTwice)
+			err = d.Pool.Pool.Disconnect(mc.Addr, ErrDisconnectConnectedTwice)
+			if err != nil {
+				logger.Warning("Failed Disconnect from address %s, err: %v", mc.Addr, err)
+			}
 			return ErrDisconnectConnectedTwice
 		}
 		return nil
@@ -329,7 +342,10 @@ func (intro *IntroductionMessage) Process(d *Daemon) {
 		// This should never happen, but the program should not allow itself
 		// to be corrupted in case it does
 		logger.Error("Invalid port for connection %s", a)
-		d.Pool.Pool.Disconnect(intro.c.Addr, ErrDisconnectOtherError)
+		err = d.Pool.Pool.Disconnect(intro.c.Addr, ErrDisconnectOtherError)
+		if err != nil {
+			logger.Warning("Failed Disconnect address %s. err: %v", intro.c.Addr, err)
+		}
 		return
 	}
 
@@ -342,7 +358,10 @@ func (intro *IntroductionMessage) Process(d *Daemon) {
 	}
 
 	// Anounce unconfirmed know txns
-	d.Visor.AnnounceAllTxns(d.Pool)
+	err = d.Visor.AnnounceAllTxns(d.Pool)
+	if err != nil {
+		logger.Warning("Failed AnnounceAllTxns: %v", err)
+	}
 }
 
 // PingMessage Sent to keep a connection alive. A PongMessage is sent in reply.

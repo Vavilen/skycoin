@@ -69,22 +69,48 @@ func New(db *bolt.DB) (*HistoryDB, error) {
 	return &hd, nil
 }
 
+type IsEmptier interface {
+	IsEmpty() (bool, error)
+}
+
+type checker struct {
+	empty bool
+	err   error
+}
+
+func (ch *checker) checkIsEmpty(emptier IsEmptier) {
+	if ch.empty || ch.err != nil {
+		return
+	}
+	ch.empty, ch.err = emptier.IsEmpty()
+}
+
 // ResetIfNeed checks if need to reset the parsed block history,
 // If we have a new added bucket, we need to reset to parse
 // blockchain again to get the new bucket filled.
 func (hd *HistoryDB) ResetIfNeed() error {
-	if hd.historyMeta.ParsedHeight() == 0 {
+	height, err := hd.historyMeta.ParsedHeight()
+	if err != nil {
+		return err
+	}
+	if height == 0 {
 		return nil
 	}
-
+	ch := &checker{}
 	// if any of the following buckets are empty, need to reset
-	if hd.addrTxns.IsEmpty() ||
-		hd.addrUx.IsEmpty() ||
-		hd.txns.IsEmpty() ||
-		hd.outputs.IsEmpty() {
-		return hd.reset()
+	for _, obj := range []IsEmptier{hd.addrTxns, hd.addrTxns, hd.addrUx, hd.txns, hd.outputs} {
+		ch.checkIsEmpty(obj)
 	}
 
+	if ch.err != nil {
+		return ch.err
+	}
+	if ch.empty {
+		err := hd.reset()
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

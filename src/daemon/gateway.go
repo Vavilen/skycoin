@@ -56,10 +56,12 @@ func NewGateway(c GatewayConfig, D *Daemon) *Gateway {
 
 func (gw *Gateway) strand(name string, f func()) {
 	name = fmt.Sprintf("daemon.Gateway.%s", name)
-	strand.Strand(logger, gw.requests, name, func() error {
+	if err := strand.Strand(logger, gw.requests, name, func() error {
 		f()
 		return nil
-	})
+	}); err != nil {
+		logger.Warning("Failed strand %s func: %v", name, err)
+	}
 }
 
 // GetConnections returns a *Connections

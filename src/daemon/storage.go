@@ -229,7 +229,7 @@ func NewMirrorConnections() *MirrorConnections {
 
 // Add adds mirror connection
 func (mc *MirrorConnections) Add(mirror uint32, ip string, port uint16) {
-	mc.do(func(s *store) error {
+	var err = mc.do(func(s *store) error {
 		if m, ok := s.value[mirror]; ok {
 			m.(map[string]uint16)[ip] = port
 			return nil
@@ -240,29 +240,39 @@ func (mc *MirrorConnections) Add(mirror uint32, ip string, port uint16) {
 		s.value[mirror] = m
 		return nil
 	})
+	if err != nil {
+		logger.Warning("Add mirror connections failed: %v", err)
+	}
 }
 
 // Get returns ip port of specific mirror
 func (mc *MirrorConnections) Get(mirror uint32, ip string) (uint16, bool) {
 	var port uint16
 	var exist bool
-	mc.do(func(s *store) error {
+	var err error
+	err = mc.do(func(s *store) error {
 		if m, ok := s.value[mirror]; ok {
 			port, exist = m.(map[string]uint16)[ip]
 		}
 		return nil
 	})
+	if err != nil {
+		logger.Warning("Get mirror connections failed: %v", err)
+	}
 	return port, exist
 }
 
 // Remove removes port of ip for specific mirror
 func (mc *MirrorConnections) Remove(mirror uint32, ip string) {
-	mc.do(func(s *store) error {
+	var err = mc.do(func(s *store) error {
 		if m, ok := s.value[mirror]; ok {
 			delete(m.(map[string]uint16), ip)
 		}
 		return nil
 	})
+	if err != nil {
+		logger.Warning("Remove mirror connections failed: %v", err)
+	}
 }
 
 // IPCount records connection number from the same base ip
@@ -286,7 +296,7 @@ func NewIPCount() *IPCount {
 
 // Increase increases one for specific ip
 func (ic *IPCount) Increase(ip string) {
-	ic.do(func(s *store) error {
+	var err = ic.do(func(s *store) error {
 		if v, ok := s.value[ip]; ok {
 			c := v.(int)
 			c++
@@ -297,11 +307,14 @@ func (ic *IPCount) Increase(ip string) {
 		s.value[ip] = 1
 		return nil
 	})
+	if err != nil {
+		logger.Warning("Increase failed: %v", err)
+	}
 }
 
 // Decrease decreases one for specific ip
 func (ic *IPCount) Decrease(ip string) {
-	ic.do(func(s *store) error {
+	var err = ic.do(func(s *store) error {
 		if v, ok := s.value[ip]; ok {
 			c := v.(int)
 			if c <= 1 {
@@ -313,6 +326,9 @@ func (ic *IPCount) Decrease(ip string) {
 		}
 		return nil
 	})
+	if err != nil {
+		logger.Warning("Decrease failed: %v", err)
+	}
 }
 
 // Get return ip count

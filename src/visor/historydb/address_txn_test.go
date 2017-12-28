@@ -20,11 +20,12 @@ func TestNewAddressTxns(t *testing.T) {
 	require.Nil(t, err)
 
 	// the address_txns bucket must be exist
-	db.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket([]byte("address_txns"))
 		require.NotNil(t, bkt)
 		return nil
 	})
+	require.Nil(t, err)
 }
 
 func TestAddAddressTxns(t *testing.T) {
@@ -135,7 +136,7 @@ func TestAddAddressTxns(t *testing.T) {
 			}))
 
 			for _, e := range tc.expect {
-				db.View(func(tx *bolt.Tx) error {
+				err = db.View(func(tx *bolt.Tx) error {
 					bkt := tx.Bucket(addressTxnsBktName)
 					v := bkt.Get(e.addr.Bytes())
 					require.NotNil(t, v)
@@ -144,6 +145,7 @@ func TestAddAddressTxns(t *testing.T) {
 					require.Equal(t, e.txs, hashes)
 					return nil
 				})
+				require.Nil(t, err)
 			}
 
 		})

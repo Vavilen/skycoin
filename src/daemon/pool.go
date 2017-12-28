@@ -85,10 +85,16 @@ func (pool *Pool) Run() error {
 
 // Send a ping if our last message sent was over pingRate ago
 func (pool *Pool) sendPings() {
-	pool.Pool.SendPings(pool.Config.PingRate, &PingMessage{})
+	var err = pool.Pool.SendPings(pool.Config.PingRate, &PingMessage{})
+	if err != nil {
+		logger.Warning("Failed to SendPings: %v", err)
+	}
 }
 
 // Removes connections that have not sent a message in too long
 func (pool *Pool) clearStaleConnections() {
-	pool.Pool.ClearStaleConnections(pool.Config.IdleLimit, ErrDisconnectIdle)
+	var err = pool.Pool.ClearStaleConnections(pool.Config.IdleLimit, ErrDisconnectIdle)
+	if err != nil {
+		logger.Warning("Failed to ClearStaleConnections: %v", err)
+	}
 }

@@ -74,12 +74,13 @@ func MakeBlockchain(t *testing.T, db *bolt.DB, seckey cipher.SecKey) *visor.Bloc
 	}
 
 	sig := cipher.SignHash(gb.HashHeader(), seckey)
-	db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		return b.ExecuteBlockWithTx(tx, &coin.SignedBlock{
 			Block: *gb,
 			Sig:   sig,
 		})
 	})
+	require.NoError(t, err)
 	return b
 }
 
@@ -132,11 +133,12 @@ func executeGenesisSpendTransaction(t *testing.T, db *bolt.DB, bc *visor.Blockch
 		Sig:   sig,
 	}
 
-	db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		err = bc.ExecuteBlockWithTx(tx, &sb)
 		require.NoError(t, err)
 		return nil
 	})
+	require.NoError(t, err)
 
 	uxOut, err := coin.CreateUnspent(block.Head, txn, 0)
 	require.NoError(t, err)

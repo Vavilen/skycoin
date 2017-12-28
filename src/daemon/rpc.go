@@ -154,7 +154,10 @@ func (rpc RPC) ResendTransaction(v *Visor, p *Pool, txHash cipher.SHA256) *Resen
 	if v.v == nil {
 		return nil
 	}
-	v.ResendTransaction(txHash, p)
+	var err = v.ResendTransaction(txHash, p)
+	if err != nil {
+		logger.Warning("Failed ResendTransaction: %v", err)
+	}
 	return &ResendResult{}
 }
 

@@ -269,11 +269,14 @@ func (bc *Blockchain) GetGenesisBlock() *coin.SignedBlock {
 }
 
 func (bc *Blockchain) syncCache() error {
+	var err error
 	// update head seq cache
 	bc.Lock()
 	defer bc.Unlock()
-	bc.cache.headSeq = bc.getHeadSeqFromDB()
-
+	bc.cache.headSeq, err = bc.getHeadSeqFromDB()
+	if err != nil {
+		return err
+	}
 	// load genesis block
 	if bc.cache.genesisBlock == nil {
 		b, err := bc.GetBlockBySeq(0)
@@ -286,12 +289,16 @@ func (bc *Blockchain) syncCache() error {
 	return nil
 }
 
-func (bc *Blockchain) getHeadSeqFromDB() uint64 {
-	if v := bc.meta.Get(headSeqKey); v != nil {
-		return bucket.Btoi(v)
+func (bc *Blockchain) getHeadSeqFromDB() (uint64, error) {
+	v, err := bc.meta.Get(headSeqKey)
+	if err != nil {
+		return 0, err
+	}
+	if v != nil {
+		return bucket.Btoi(v), nil
 	}
 
-	return 0
+	return 0, nil
 }
 
 // dbUpdate will execute all processors in sequence, return error will rollback all

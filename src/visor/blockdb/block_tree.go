@@ -151,7 +151,10 @@ func (bt *blockTree) RemoveBlock(b *coin.Block) error {
 		// remove block hash pair in tree.
 		ps := removePairs(hashPairs, coin.HashPair{Hash: hash, PreHash: b.PreHashHeader()})
 		if len(ps) == 0 {
-			tree.Delete(bucket.Itob(b.Seq()))
+			err = tree.Delete(bucket.Itob(b.Seq()))
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 
@@ -177,8 +180,8 @@ func (bt *blockTree) GetBlockInDepth(depth uint64, filter func(hps []coin.HashPa
 }
 
 func (bt *blockTree) getBlock(hash cipher.SHA256) *coin.Block {
-	bin := bt.blocks.Get(hash[:])
-	if bin == nil {
+	bin, err := bt.blocks.Get(hash[:])
+	if bin == nil || err != nil {
 		return nil
 	}
 	block := coin.Block{}
@@ -190,7 +193,10 @@ func (bt *blockTree) getBlock(hash cipher.SHA256) *coin.Block {
 
 func (bt *blockTree) getHashInDepth(depth uint64, filter func(ps []coin.HashPair) cipher.SHA256) (cipher.SHA256, error) {
 	key := bucket.Itob(depth)
-	pairsBin := bt.tree.Get(key)
+	pairsBin, err := bt.tree.Get(key)
+	if err != nil {
+		return cipher.SHA256{}, err
+	}
 	pairs := []coin.HashPair{}
 	if err := encoder.DeserializeRaw(pairsBin, &pairs); err != nil {
 		return cipher.SHA256{}, err

@@ -112,8 +112,10 @@ func (fg fakeGateway) GetTimeNow() uint64 {
 
 func Test_rpcHandler_HandlerFunc(t *testing.T) {
 	rpc := setupWebRPC(t)
-	rpc.HandleFunc("get_status", getStatusHandler)
+	//TODO: handler already exists before rpc handler register
 	err := rpc.HandleFunc("get_status", getStatusHandler)
+	require.Error(t, err)
+	err = rpc.HandleFunc("get_status", getStatusHandler)
 	require.Error(t, err)
 }
 
@@ -124,7 +126,7 @@ func Test_rpcHandler_Handler(t *testing.T) {
 		errC <- rpc.Run()
 	}()
 	defer func() {
-		rpc.Shutdown()
+		require.NoError(t, rpc.Shutdown())
 		require.NoError(t, <-errC)
 	}()
 

@@ -3,6 +3,8 @@ package secp256k1go
 import (
 	"crypto/rand"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFeInv(t *testing.T) {
@@ -18,7 +20,8 @@ func TestFeInv(t *testing.T) {
 func BenchmarkFieldSqrt(b *testing.B) {
 	var dat [32]byte
 	var f, tmp Field
-	rand.Read(dat[:])
+	_, err := rand.Read(dat[:])
+	require.NoError(b, err)
 	f.SetB32(dat[:])
 	for i := 0; i < b.N; i++ {
 		f.Sqrt(&tmp)
@@ -28,7 +31,8 @@ func BenchmarkFieldSqrt(b *testing.B) {
 func BenchmarkFieldInv(b *testing.B) {
 	var dat [32]byte
 	var f, tmp Field
-	rand.Read(dat[:])
+	_, err := rand.Read(dat[:])
+	require.NoError(b, err)
 	f.SetB32(dat[:])
 	for i := 0; i < b.N; i++ {
 		f.Inv(&tmp)

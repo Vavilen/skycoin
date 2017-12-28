@@ -30,8 +30,8 @@ func Example() {
 func TestLoadConfig(t *testing.T) {
 	t.Run("set COIN", func(t *testing.T) {
 		val := "foocoin"
-		os.Setenv("COIN", val)
-		defer os.Unsetenv("COIN")
+		require.NoError(t, os.Setenv("COIN", val))
+		defer require.NoError(t, os.Unsetenv("COIN"))
 
 		cfg, err := LoadConfig()
 		require.NoError(t, err)
@@ -40,8 +40,8 @@ func TestLoadConfig(t *testing.T) {
 
 	t.Run("set RPC_ADDR", func(t *testing.T) {
 		val := "111.22.33.44:5555"
-		os.Setenv("RPC_ADDR", val)
-		defer os.Unsetenv("RPC_ADDR")
+		require.NoError(t, os.Setenv("RPC_ADDR", val))
+		defer require.NoError(t, os.Unsetenv("RPC_ADDR"))
 
 		cfg, err := LoadConfig()
 		require.NoError(t, err)
@@ -50,8 +50,8 @@ func TestLoadConfig(t *testing.T) {
 
 	t.Run("set WALLET_DIR", func(t *testing.T) {
 		val := "/home/foo/bar"
-		os.Setenv("WALLET_DIR", val)
-		defer os.Unsetenv("WALLET_DIR")
+		require.NoError(t, os.Setenv("WALLET_DIR", val))
+		defer require.NoError(t, os.Unsetenv("WALLET_DIR"))
 
 		cfg, err := LoadConfig()
 		require.NoError(t, err)
@@ -60,8 +60,8 @@ func TestLoadConfig(t *testing.T) {
 
 	t.Run("set WALLET_NAME", func(t *testing.T) {
 		val := "bar.wlt"
-		os.Setenv("WALLET_NAME", val)
-		defer os.Unsetenv("WALLET_NAME")
+		require.NoError(t, os.Setenv("WALLET_NAME", val))
+		defer require.NoError(t, os.Unsetenv("WALLET_NAME"))
 
 		cfg, err := LoadConfig()
 		require.NoError(t, err)
@@ -70,8 +70,8 @@ func TestLoadConfig(t *testing.T) {
 
 	t.Run("set WALLET_NAME invalid", func(t *testing.T) {
 		val := "badwltext.foo"
-		os.Setenv("WALLET_NAME", val)
-		defer os.Unsetenv("WALLET_NAME")
+		require.NoError(t, os.Setenv("WALLET_NAME", val))
+		defer require.NoError(t, os.Unsetenv("WALLET_NAME"))
 
 		_, err := LoadConfig()
 		require.Error(t, err)

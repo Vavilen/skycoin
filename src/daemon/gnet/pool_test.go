@@ -66,7 +66,7 @@ func TestNewConnection(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 
 	wait()
@@ -96,7 +96,7 @@ func TestNewConnectionAlreadyConnected(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -127,7 +127,7 @@ func TestAcceptConnections(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -135,7 +135,7 @@ func TestAcceptConnections(t *testing.T) {
 
 	c, err := net.Dial("tcp", addr)
 	require.NoError(t, err)
-	defer c.Close()
+	defer require.NoError(t, c.Close())
 	wait()
 
 	require.Len(t, p.addresses, 1)
@@ -162,7 +162,7 @@ func TestStartListen(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -183,7 +183,7 @@ func TestStartListenFailed(t *testing.T) {
 	qc := make(chan struct{})
 	go func() {
 		defer close(qc)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 	q := NewConnectionPool(cfg, nil)
@@ -199,7 +199,7 @@ func TestStopListen(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -230,7 +230,7 @@ func TestHandleConnection(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -279,7 +279,7 @@ func TestConnect(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -300,7 +300,7 @@ func TestConnect(t *testing.T) {
 	wait()
 	wc := make(chan struct{})
 	go func() {
-		p.Connect(addr)
+		require.NoError(t, p.Connect(addr))
 		wc <- struct{}{}
 	}()
 
@@ -323,7 +323,7 @@ func TestConnectNoTimeout(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -343,7 +343,7 @@ func TestDisconnect(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -357,7 +357,7 @@ func TestDisconnect(t *testing.T) {
 		require.Equal(t, addr, c.Addr())
 	}
 
-	p.Disconnect(c.Addr(), ErrDisconnectMalformedMessage)
+	require.NoError(t, p.Disconnect(c.Addr(), ErrDisconnectMalformedMessage))
 
 	// Disconnecting a connection that isn't known has no effect
 	// c = &Connection{Id: 88}
@@ -365,7 +365,7 @@ func TestDisconnect(t *testing.T) {
 	p.Config.DisconnectCallback = func(addr string, reason DisconnectReason) {
 		t.Fatal("disconnect unknown connection should not see this")
 	}
-	p.Disconnect("", nil)
+	require.NoError(t, p.Disconnect("", nil))
 
 	p.Shutdown()
 	<-q
@@ -400,7 +400,7 @@ func TestGetConnections(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -429,7 +429,7 @@ func TestConnectionReadLoop(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 
 	wait()
@@ -446,7 +446,7 @@ func TestConnectionReadLoop(t *testing.T) {
 	go p.handleConnection(reconn, false)
 	wait()
 	require.True(t, reconn.(*ReadErrorConn).ReadDeadlineSet != time.Time{})
-	reconn.Close()
+	require.NoError(t, reconn.Close())
 
 	// 2:
 	// Use a mock net.Conn that fails on SetReadDeadline
@@ -458,7 +458,7 @@ func TestConnectionReadLoop(t *testing.T) {
 	rdfconn := &ReadDeadlineFailedConn{}
 	go p.handleConnection(rdfconn, false)
 	wait()
-	rdfconn.Close()
+	require.NoError(t, rdfconn.Close())
 
 	// 3:
 	// Use a mock net.Conn that returns some bytes on Read
@@ -472,7 +472,7 @@ func TestConnectionReadLoop(t *testing.T) {
 	wait()
 	raconn.stop()
 	wait()
-	raconn.Close()
+	require.NoError(t, raconn.Close())
 
 	// 4: Use a mock net.Conn that successfully returns 0 bytes when read
 	rnconn := &ReadNothingConn{}
@@ -484,7 +484,7 @@ func TestConnectionReadLoop(t *testing.T) {
 	wait()
 	rnconn.stop()
 	wait()
-	rnconn.Close()
+	require.NoError(t, rnconn.Close())
 
 	p.Shutdown()
 	<-q
@@ -502,7 +502,7 @@ func TestProcessConnectionBuffers(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -516,14 +516,16 @@ func TestProcessConnectionBuffers(t *testing.T) {
 		t.Fatal("should not see this")
 	}
 
-	conn.Write([]byte{4, 0, 0, 0})
-
+	_, err = conn.Write([]byte{4, 0, 0, 0})
+	require.NoError(t, err)
 	// A DummyMessage should have been processed
-	conn.Write([]byte{'D', 'U', 'M', 'Y'})
+	_, err = conn.Write([]byte{'D', 'U', 'M', 'Y'})
+	require.NoError(t, err)
 	wait()
 	require.NotEqual(t, c.LastReceived, time.Time{})
 	require.Equal(t, c.Buffer.Len(), 0)
-	conn.Write([]byte{5, 0, 0, 0, 0})
+	_, err = conn.Write([]byte{5, 0, 0, 0, 0})
+	require.NoError(t, err)
 	wait()
 	require.Equal(t, c.Buffer.Len(), 5)
 
@@ -535,7 +537,8 @@ func TestProcessConnectionBuffers(t *testing.T) {
 		require.Equal(t, reason, errors.New("Bad"))
 	}
 
-	conn.Write([]byte{4, 0, 0, 0, 'E', 'R', 'R', 0x00})
+	_, err = conn.Write([]byte{4, 0, 0, 0, 'E', 'R', 'R', 0x00})
+	require.NoError(t, err)
 	wait()
 	require.Equal(t, c.Buffer.Len(), 0)
 
@@ -543,7 +546,8 @@ func TestProcessConnectionBuffers(t *testing.T) {
 		fmt.Println(reason)
 		t.Fatal("should not see this")
 	}
-	conn.Write([]byte{4, 0, 0, 0, 'D', 'U', 'M', 'Y'})
+	_, err = conn.Write([]byte{4, 0, 0, 0, 'D', 'U', 'M', 'Y'})
+	require.NoError(t, err)
 	wait()
 	require.Equal(t, c.Buffer.Len(), 0)
 
@@ -561,7 +565,8 @@ func TestProcessConnectionBuffers(t *testing.T) {
 	// Sending a length of < messagePrefixLength should cause a disconnect
 	t.Logf("Pushing message with too small length")
 	c.Buffer.Reset()
-	conn.Write([]byte{messagePrefixLength - 1, 0, 0, 0, 'B', 'Y', 'T', 'E'})
+	_, err = conn.Write([]byte{messagePrefixLength - 1, 0, 0, 0, 'B', 'Y', 'T', 'E'})
+	require.NoError(t, err)
 	wait()
 
 	// Sending a length > MaxMessageLength should cause a disconnect
@@ -575,7 +580,8 @@ func TestProcessConnectionBuffers(t *testing.T) {
 		require.Equal(t, ErrDisconnectInvalidMessageLength, r)
 		require.Nil(t, p.pool[3])
 	}
-	conn.Write([]byte{5, 0, 0, 0, 'B', 'Y', 'T', 'E'})
+	_, err = conn.Write([]byte{5, 0, 0, 0, 'B', 'Y', 'T', 'E'})
+	require.NoError(t, err)
 	wait()
 	p.Config.MaxMessageLength = max
 
@@ -610,7 +616,7 @@ func TestConnectionWriteLoop(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 
 	wait()
@@ -621,7 +627,7 @@ func TestConnectionWriteLoop(t *testing.T) {
 
 	m := NewByteMessage(88)
 	// Send a successful message to b
-	p.SendMessage(c.Addr(), m)
+	require.NoError(t, p.SendMessage(c.Addr(), m))
 	wait()
 
 	if len(p.SendResults) == 0 {
@@ -638,7 +644,7 @@ func TestConnectionWriteLoop(t *testing.T) {
 	p.Config.DisconnectCallback = func(addr string, reason DisconnectReason) {
 		require.Equal(t, reason, errors.New("failed"))
 	}
-	p.SendMessage(c.Addr(), m)
+	require.NoError(t, p.SendMessage(c.Addr(), m))
 	wait()
 
 	if len(p.SendResults) == 0 {
@@ -668,7 +674,7 @@ func TestPoolSendMessage(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -684,7 +690,7 @@ func TestPoolSendMessage(t *testing.T) {
 
 	c := <-cc
 	m := NewByteMessage(88)
-	p.SendMessage(c.Addr(), m)
+	require.NoError(t, p.SendMessage(c.Addr(), m))
 
 	// queue full
 	for i := 0; i < cap(c.WriteQueue)+1; i++ {
@@ -710,7 +716,7 @@ func TestPoolBroadcastMessage(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 
@@ -757,7 +763,7 @@ func TestPoolReceiveMessage(t *testing.T) {
 	q := make(chan struct{})
 	go func() {
 		defer close(q)
-		p.Run()
+		require.NoError(t, p.Run())
 	}()
 	wait()
 

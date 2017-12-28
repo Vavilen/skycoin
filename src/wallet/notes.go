@@ -150,7 +150,10 @@ func (notes *Notes) SaveNote(dir string, note Note) error {
 	if error != nil {
 		return error
 	}
-	readableNotesToBeSaved.Save(fileName)
+	error = readableNotesToBeSaved.Save(fileName)
+	if error != nil {
+		return error
+	}
 	return nil
 }
 
@@ -205,7 +208,10 @@ func CreateNoteFileIfNotExist(dir string) {
 		noteFileName := NewNotesFilename()
 		dummyNotes := ReadableNotes{}
 		fullpath := filepath.Join(dir, noteFileName)
-		dummyNotes.Save(fullpath)
+		err = dummyNotes.Save(fullpath)
+		if err != nil {
+			logger.Critical("create file if not exist: %s, err: %v", fullpath, err)
+		}
 	}
 
 }

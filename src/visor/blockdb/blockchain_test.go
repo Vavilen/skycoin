@@ -362,12 +362,12 @@ func TestBlockchainHead(t *testing.T) {
 	require.EqualError(t, err, "found no head block: 0")
 
 	gb := makeGenesisBlock(t)
-	db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		err := bc.AddBlockWithTx(tx, &gb)
 		require.NoError(t, err)
 		return nil
 	})
-
+	require.NoError(t, err)
 	b, err := bc.Head()
 	require.NoError(t, err)
 	require.Equal(t, gb.HashHeader().Hex(), b.HashHeader().Hex())

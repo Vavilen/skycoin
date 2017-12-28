@@ -28,7 +28,10 @@ func newAddressTxnsBkt(db *bolt.DB) (*addressTxns, error) {
 // Get returns the transaction hashes of given address
 func (atx *addressTxns) Get(address cipher.Address) ([]cipher.SHA256, error) {
 	var txHashes []cipher.SHA256
-	v := atx.bkt.Get(address.Bytes())
+	v, err := atx.bkt.Get(address.Bytes())
+	if err != nil {
+		return []cipher.SHA256{}, err
+	}
 	if v == nil {
 		return []cipher.SHA256{}, nil
 	}
@@ -41,7 +44,7 @@ func (atx *addressTxns) Get(address cipher.Address) ([]cipher.SHA256, error) {
 }
 
 // IsEmpty checks if address transactions bucket is empty
-func (atx *addressTxns) IsEmpty() bool {
+func (atx *addressTxns) IsEmpty() (bool, error) {
 	return atx.bkt.IsEmpty()
 }
 

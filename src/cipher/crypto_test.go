@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/skycoin/skycoin/src/cipher/ripemd160"
 )
 
@@ -85,7 +87,8 @@ func TestPubKeyToAddressHash(t *testing.T) {
 	x := sha256.Sum256(p[:])
 	x = sha256.Sum256(x[:])
 	rh := ripemd160.New()
-	rh.Write(x[:])
+	_, err := rh.Write(x[:])
+	require.NoError(t, err)
 	y := rh.Sum(nil)
 	assert.True(t, bytes.Equal(h[:], y))
 }

@@ -108,7 +108,12 @@ func shaFileID(dbPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer fi.Close()
+	defer func() {
+		err := fi.Close()
+		if err != nil {
+			logger.Warning("Failed close *File for %s: %v", dbPath, err)
+		}
+	}()
 
 	h := sha1.New()
 	if _, err := io.Copy(h, fi); err != nil {

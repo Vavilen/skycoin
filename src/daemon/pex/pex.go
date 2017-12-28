@@ -535,7 +535,12 @@ func downloadText(url string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		var errDeffer = resp.Body.Close()
+		if errDeffer != nil {
+			logger.Warning("Failed resp.Body.Close() at downloadText: %v", err)
+		}
+	}()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

@@ -23,7 +23,7 @@ import (
 // Commands all cmds that we support
 
 const (
-	Version           = "0.20.3"
+	Version           = "0.21.1"
 	walletExt         = ".wlt"
 	defaultCoin       = "skycoin"
 	defaultWalletName = "$COIN_cli" + walletExt
@@ -238,7 +238,9 @@ func NewApp(cfg Config) *App {
 	app.EnableBashCompletion = true
 	app.OnUsageError = func(context *gcli.Context, err error, isSubcommand bool) error {
 		fmt.Fprintf(context.App.Writer, "Error: %v\n\n", err)
-		gcli.ShowAppHelp(context)
+		if err := gcli.ShowAppHelp(context); err != nil {
+			return err
+		}
 		return nil
 	}
 	app.CommandNotFound = func(ctx *gcli.Context, command string) {
@@ -272,7 +274,9 @@ func ConfigFromContext(c *gcli.Context) Config {
 func onCommandUsageError(command string) gcli.OnUsageErrorFunc {
 	return func(c *gcli.Context, err error, isSubcommand bool) error {
 		fmt.Fprintf(c.App.Writer, "Error: %v\n\n", err)
-		gcli.ShowCommandHelp(c, command)
+		if err := gcli.ShowCommandHelp(c, command); err != nil {
+			return err
+		}
 		return nil
 	}
 }

@@ -27,11 +27,15 @@ func newHistoryMeta(db *bolt.DB) (*historyMeta, error) {
 }
 
 // Height returns history parsed height, if no block was parsed, return -1.
-func (hm *historyMeta) ParsedHeight() int64 {
-	if v := hm.v.Get(parsedHeightKey); v != nil {
-		return int64(bucket.Btoi(v))
+func (hm *historyMeta) ParsedHeight() (int64, error) {
+	v, err := hm.v.Get(parsedHeightKey)
+	if err != nil {
+		return -1, err
 	}
-	return -1
+	if v != nil {
+		return int64(bucket.Btoi(v)), nil
+	}
+	return -1, nil
 }
 
 // SetParsedHeight updates history parsed height
@@ -50,7 +54,7 @@ func (hm *historyMeta) SetParsedHeightWithTx(tx *bolt.Tx, h uint64) error {
 }
 
 // IsEmpty checks if history meta bucket is empty
-func (hm *historyMeta) IsEmpty() bool {
+func (hm *historyMeta) IsEmpty() (bool, error) {
 	return hm.v.IsEmpty()
 }
 

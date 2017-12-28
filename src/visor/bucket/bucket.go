@@ -41,13 +41,14 @@ func (b *Bucket) Reset() error {
 }
 
 // Get value of specific key in the bucket.
-func (b Bucket) Get(key []byte) []byte {
+func (b Bucket) Get(key []byte) ([]byte, error) {
 	var value []byte
-	b.db.View(func(tx *bolt.Tx) error {
+	var err error
+	err = b.db.View(func(tx *bolt.Tx) error {
 		value = tx.Bucket(b.Name).Get(key)
 		return nil
 	})
-	return value
+	return value, err
 }
 
 // GetWithTx gets value
@@ -56,23 +57,25 @@ func (b Bucket) GetWithTx(tx *bolt.Tx, key []byte) []byte {
 }
 
 // GetAll returns all values
-func (b *Bucket) GetAll() map[interface{}][]byte {
+func (b *Bucket) GetAll() (map[interface{}][]byte, error) {
 	values := map[interface{}][]byte{}
-	b.db.View(func(tx *bolt.Tx) error {
+	var err error
+	err = b.db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(b.Name)
-		bkt.ForEach(func(k, v []byte) error {
+		errInner := bkt.ForEach(func(k, v []byte) error {
 			values[string(k)] = v
 			return nil
 		})
-		return nil
+		return errInner
 	})
-	return values
+	return values, err
 }
 
 // GetSlice returns values by key slice
-func (b *Bucket) GetSlice(keys [][]byte) [][]byte {
+func (b *Bucket) GetSlice(keys [][]byte) ([][]byte, error) {
 	var values [][]byte
-	b.db.View(func(tx *bolt.Tx) error {
+	var err error
+	err = b.db.View(func(tx *bolt.Tx) error {
 		for _, k := range keys {
 			v := tx.Bucket(b.Name).Get(k)
 			if v != nil {
@@ -82,7 +85,7 @@ func (b *Bucket) GetSlice(keys [][]byte) [][]byte {
 		return nil
 	})
 
-	return values
+	return values, err
 }
 
 // Put key value in the bucket.
@@ -103,9 +106,10 @@ func (b Bucket) PutWithTx(tx *bolt.Tx, key []byte, value []byte) error {
 }
 
 // Find find value that match the filter in the bucket.
-func (b Bucket) Find(filter func(key, value []byte) bool) []byte {
+func (b Bucket) Find(filter func(key, value []byte) bool) ([]byte, error) {
 	var value []byte
-	b.db.View(func(tx *bolt.Tx) error {
+	var err error
+	err = b.db.View(func(tx *bolt.Tx) error {
 		bt := tx.Bucket(b.Name)
 
 		c := bt.Cursor()
@@ -117,7 +121,7 @@ func (b Bucket) Find(filter func(key, value []byte) bool) []byte {
 		}
 		return nil
 	})
-	return value
+	return value, err
 }
 
 // Update use callback func to update the value of given key
@@ -170,22 +174,23 @@ func (b *Bucket) RangeUpdate(f func(k, v []byte) ([]byte, error)) error {
 }
 
 // IsExist check if the value exist of the given key
-func (b *Bucket) IsExist(k []byte) bool {
+func (b *Bucket) IsExist(k []byte) (bool, error) {
 	var exist bool
-	b.db.View(func(tx *bolt.Tx) error {
+	var err error
+	err = b.db.View(func(tx *bolt.Tx) error {
 		v := tx.Bucket(b.Name).Get(k)
 		if v != nil {
 			exist = true
 		}
 		return nil
 	})
-	return exist
+	return exist, err
 }
 
 // IsEmpty check if the bucket is empty
-func (b *Bucket) IsEmpty() bool {
+func (b *Bucket) IsEmpty() (bool, error) {
 	var empty = true
-	b.db.View(func(tx *bolt.Tx) error {
+	err := b.db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(b.Name).Cursor()
 		k, _ := c.First()
 		if k != nil {
@@ -194,7 +199,7 @@ func (b *Bucket) IsEmpty() bool {
 
 		return nil
 	})
-	return empty
+	return empty, err
 }
 
 // ForEach iterate the whole bucket
@@ -205,8 +210,8 @@ func (b *Bucket) ForEach(f func(k, v []byte) error) error {
 }
 
 // Len returns the number of key value pairs
-func (b *Bucket) Len() (len int) {
-	b.db.View(func(tx *bolt.Tx) error {
+func (b *Bucket) Len() (len int, err error) {
+	err = b.db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(b.Name).Cursor()
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
 			len++

@@ -60,9 +60,11 @@ func TestNewUnspentPool(t *testing.T) {
 
 	up, err := NewUnspentPool(db)
 	assert.Nil(t, err)
-
-	assert.Equal(t, 0, up.pool.Len())
-	v := up.meta.Get(xorhashKey)
+	var l int
+	l, err = up.pool.Len()
+	assert.Equal(t, 0, l)
+	v, err := up.meta.Get(xorhashKey)
+	assert.Nil(t, err)
 	assert.Nil(t, v)
 }
 
@@ -217,12 +219,13 @@ func TestUnspentPoolGetUxHash(t *testing.T) {
 	for _, ux := range uxs {
 		assert.Nil(t, addUxOut(up, ux))
 		uxHash := up.GetUxHash()
-		db.Update(func(tx *bolt.Tx) error {
+		err := db.Update(func(tx *bolt.Tx) error {
 			xorhash, err := up.meta.getXorHashWithTx(tx)
 			require.NoError(t, err)
 			require.Equal(t, xorhash.Hex(), uxHash.Hex())
 			return nil
 		})
+		require.NoError(t, err)
 	}
 }
 

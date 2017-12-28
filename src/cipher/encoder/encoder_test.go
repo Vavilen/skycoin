@@ -8,13 +8,16 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/skycoin/skycoin/src/cipher"
 )
 
-func randBytes(n int) []byte {
+func randBytes(t *testing.T, n int) []byte {
 	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	var bytes = make([]byte, n)
-	rand.Read(bytes)
+	_, err := rand.Read(bytes)
+	require.NoError(t, err)
 	for i, b := range bytes {
 		bytes[i] = alphanum[b%byte(len(alphanum))]
 	}
@@ -156,7 +159,7 @@ type TestStruct3 struct {
 func Test_Encode_3a(T *testing.T) { //test function starts with "Test" and takes a pointer to type testing.T
 	var t1 TestStruct3
 	t1.X = 345535
-	t1.K = randBytes(32)
+	t1.K = randBytes(T, 32)
 
 	b := Serialize(t1)
 
@@ -183,7 +186,7 @@ func Test_Encode_3a(T *testing.T) { //test function starts with "Test" and takes
 func Test_Encode_3b(T *testing.T) { //test function starts with "Test" and takes a pointer to type testing.T
 	var t1 TestStruct3
 	t1.X = 345535
-	t1.K = randBytes(32)
+	t1.K = randBytes(T, 32)
 
 	b := Serialize(t1)
 

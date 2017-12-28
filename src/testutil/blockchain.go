@@ -28,8 +28,10 @@ func PrepareDB(t *testing.T) (*bolt.DB, func()) {
 	require.NoError(t, err)
 
 	return db, func() {
-		db.Close()
-		os.Remove(f.Name())
+		err = db.Close()
+		require.NoError(t, err)
+		err = os.Remove(f.Name())
+		require.NoError(t, err)
 	}
 }
 

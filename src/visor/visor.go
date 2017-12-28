@@ -272,7 +272,7 @@ func (vs *Visor) maybeCreateGenesisBlock() error {
 // already executed, and remove them if any
 func (vs *Visor) processUnconfirmedTxns() error {
 	removeTxs := []cipher.SHA256{}
-	vs.Unconfirmed.ForEach(func(hash cipher.SHA256, tx *UnconfirmedTxn) error {
+	err := vs.Unconfirmed.ForEach(func(hash cipher.SHA256, tx *UnconfirmedTxn) error {
 		// check if the tx already executed
 		if err := vs.Blockchain.VerifyTransaction(tx.Txn); err != nil {
 			removeTxs = append(removeTxs, hash)
@@ -291,10 +291,10 @@ func (vs *Visor) processUnconfirmedTxns() error {
 	})
 
 	if len(removeTxs) > 0 {
-		vs.Unconfirmed.RemoveTransactions(removeTxs)
+		err = vs.Unconfirmed.RemoveTransactions(removeTxs)
 	}
 
-	return nil
+	return err
 }
 
 // GenesisPreconditions panics if conditions for genesis block are not met
@@ -308,7 +308,7 @@ func (vs *Visor) GenesisPreconditions() {
 
 // RefreshUnconfirmed checks unconfirmed txns against the blockchain and returns
 // all transaction that turn to valid.
-func (vs *Visor) RefreshUnconfirmed() []cipher.SHA256 {
+func (vs *Visor) RefreshUnconfirmed() ([]cipher.SHA256, error) {
 	return vs.Unconfirmed.Refresh(vs.Blockchain)
 }
 
@@ -319,7 +319,11 @@ func (vs *Visor) CreateBlock(when uint64) (coin.SignedBlock, error) {
 	}
 
 	var sb coin.SignedBlock
-	if vs.Unconfirmed.Len() == 0 {
+	l, err := vs.Unconfirmed.Len()
+	if err != nil {
+		return sb, err
+	}
+	if l == 0 {
 		return sb, errors.New("No transactions")
 	}
 
@@ -385,7 +389,8 @@ func (vs *Visor) ExecuteSignedBlock(b coin.SignedBlock) error {
 	}
 
 	if err := vs.db.Update(func(tx *bolt.Tx) error {
-		if err := vs.Blockchain.ExecuteBlockWithTx(tx, &b); err != nil {
+		var err error
+		if err = vs.Blockchain.ExecuteBlockWithTx(tx, &b); err != nil {
 			return err
 		}
 
@@ -394,9 +399,8 @@ func (vs *Visor) ExecuteSignedBlock(b coin.SignedBlock) error {
 		for _, tx := range b.Block.Body.Transactions {
 			txHashes = append(txHashes, tx.Hash())
 		}
-		vs.Unconfirmed.RemoveTransactionsWithTx(tx, txHashes)
-
-		return nil
+		err = vs.Unconfirmed.RemoveTransactionsWithTx(tx, txHashes)
+		return err
 	}); err != nil {
 		return err
 	}
@@ -447,7 +451,7 @@ func (vs *Visor) UnconfirmedIncomingOutputs() (coin.UxArray, error) {
 		return coin.UxArray{}, err
 	}
 
-	return vs.Unconfirmed.GetIncomingOutputs(head.Head), nil
+	return vs.Unconfirmed.GetIncomingOutputs(head.Head)
 }
 
 // GetSignedBlocksSince returns N signed blocks more recent than Seq. Does not return nil.
@@ -557,7 +561,7 @@ func (vs *Visor) GetAddressTxns(a cipher.Address) ([]Transaction, error) {
 	}
 
 	// Look in the unconfirmed pool
-	uxs := vs.Unconfirmed.GetUnspentsOfAddr(a)
+	uxs, err := vs.Unconfirmed.GetUnspentsOfAddr(a)
 	for _, ux := range uxs {
 		tx, ok := vs.Unconfirmed.Get(ux.Body.SrcTransaction)
 		if !ok {

@@ -11,19 +11,24 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/skycoin/skycoin/src/util/logging"
 )
 
 var (
 	poolsize       = 10
 	sha256HashChan chan hash.Hash
 	// sha256Hash hash.Hash = sha256.New()
+	logger = logging.MustGetLogger("secp256k1")
 )
 
 // SumSHA256 sum sha256
 func SumSHA256(b []byte) []byte {
 	sha256Hash := <-sha256HashChan
 	sha256Hash.Reset()
-	sha256Hash.Write(b)
+	if _, err := sha256Hash.Write(b); err != nil {
+		logger.Error("Failed to write sha256Hash: %v", err)
+	}
 	sum := sha256Hash.Sum(nil)
 	sha256HashChan <- sha256Hash
 	return sum[:]
@@ -114,7 +119,10 @@ func init() {
 	seed3 := []byte(strconv.FormatUint(uint64(os.Getpid()), 16))
 
 	seed4 := make([]byte, 256)
-	io.ReadFull(crand.Reader, seed4) //system secure random number generator
+	//system secure random number generator
+	if _, err := io.ReadFull(crand.Reader, seed4); err != nil {
+		logger.Error("Failed generate random number: %v", err)
+	}
 
 	// init the hash reuse pool
 	sha256HashChan = make(chan hash.Hash, poolsize)
