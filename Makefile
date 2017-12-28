@@ -51,11 +51,9 @@ cover: ## Runs tests on ./src/ with HTML code coverage
 	go tool cover -html=coverage-all.out
 
 install-linters: ## Install linters
+	gometalinter --vendored-linters --install
 	go get -u github.com/FiloSottile/vendorcheck
 	go get -u github.com/alecthomas/gometalinter
-	go get github.com/fzipp/gocyclo
-	go install github.com/fzipp/gocyclo
-#	gometalinter --vendored-linters --install
 
 format:  # Formats the code. Must have goimports installed (use make install-linters).
 	goimports -w -local github.com/skycoin/skycoin ./cmd
