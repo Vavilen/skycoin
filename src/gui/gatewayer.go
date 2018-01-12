@@ -19,4 +19,5 @@ type Gatewayer interface {
 	GetWalletUnconfirmedTxns(wltID string) ([]visor.UnconfirmedTxn, error)
 	CreateWallet(wltName string, options wallet.Options) (wallet.Wallet, error)
 	ScanAheadWalletAddresses(wltName string, scanN uint64) (wallet.Wallet, error)
+	GetRichlist(includeDistribution bool) (visor.Richlist, error)
 }
