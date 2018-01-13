@@ -20,4 +20,5 @@ type Gatewayer interface {
 	CreateWallet(wltName string, options wallet.Options) (wallet.Wallet, error)
 	ScanAheadWalletAddresses(wltName string, scanN uint64) (wallet.Wallet, error)
 	NewAddresses(wltID string, n uint64) ([]cipher.Address, error)
+	GetAddressCount() (uint64, error)
 }

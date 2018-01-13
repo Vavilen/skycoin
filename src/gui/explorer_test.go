@@ -6,14 +6,12 @@ import (
 
 	"encoding/json"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/skycoin/skycoin/src/cipher"
-	"github.com/skycoin/skycoin/src/testutil"
 	"github.com/skycoin/skycoin/src/visor"
 	"github.com/skycoin/skycoin/src/visor/historydb"
 )
@@ -31,184 +29,56 @@ func (gw *FakeGateway) GetUxOutByID(id cipher.SHA256) (*historydb.UxOut, error) 
 
 }
 
-func TestGetTransactionsForAddress(t *testing.T) {
-	address := testutil.MakeAddress()
-	successAddress := "111111111111111111111691FSP"
-	invalidHash := "caicb"
-	validHash := "79216473e8f2c17095c6887cc9edca6c023afedfac2e0c5460e8b6f359684f8b"
+// GetAddressCount returns count number of unique address with uxouts > 0.
+func (gw *FakeGateway) GetAddressCount() (uint64, error) {
+	args := gw.Called()
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+func TestGetAddressCount(t *testing.T) {
+	type Result struct {
+		Count uint64
+	}
 	tt := []struct {
-		name                        string
-		method                      string
-		url                         string
-		status                      int
-		err                         string
-		addressParam                string
-		gatewayGetAddressTxnsResult *visor.TransactionResults
-		gatewayGetAddressTxnsErr    error
-		gatewayGetUxOutByIDArg      cipher.SHA256
-		gatewayGetUxOutByIDResult   *historydb.UxOut
-		gatewayGetUxOutByIDErr      error
-		result                      []ReadableTransaction
+		name                         string
+		method                       string
+		url                          string
+		status                       int
+		err                          string
+		gatewayGetAddressCountResult uint64
+		gatewayGetAddressCountErr    error
+		result                       Result
 	}{
 		{
 			"405",
 			http.MethodPost,
-			"/explorer/address",
+			"/addresscount",
 			http.StatusMethodNotAllowed,
 			"405 Method Not Allowed",
-			"0",
-			&visor.TransactionResults{},
+			0,
 			nil,
-			cipher.SHA256{},
-			nil,
-			nil,
-			nil,
+			Result{},
 		},
 		{
-			"400 - address is empty",
+			"500 - gw GetAddressCount error",
 			http.MethodGet,
-			"/explorer/address",
-			http.StatusBadRequest,
-			"400 Bad Request - address is empty",
-			"",
-			&visor.TransactionResults{},
-			nil,
-			cipher.SHA256{},
-			nil,
-			nil,
-			nil,
-		},
-		{
-			"400 - invalid address",
-			http.MethodGet,
-			"/explorer/address",
-			http.StatusBadRequest,
-			"400 Bad Request - invalid address",
-			"badAddress",
-			&visor.TransactionResults{},
-			nil,
-			cipher.SHA256{},
-			nil,
-			nil,
-			nil,
-		},
-		{
-			"500 - gw GetAddressTxns error",
-			http.MethodGet,
-			"/explorer/address",
+			"/addresscount",
 			http.StatusInternalServerError,
 			"500 Internal Server Error",
-			address.String(),
-			&visor.TransactionResults{},
-			errors.New("gatewayGetAddressTxnsErr"),
-			cipher.SHA256{},
-			nil,
-			nil,
-			nil,
-		},
-		{
-			"500 - cipher.SHA256FromHex(tx.Transaction.In) error",
-			http.MethodGet,
-			"/explorer/address",
-			http.StatusInternalServerError,
-			"500 Internal Server Error",
-			address.String(),
-			&visor.TransactionResults{
-				Txns: []visor.TransactionResult{
-					{
-						Transaction: visor.ReadableTransaction{
-							In: []string{
-								invalidHash,
-							},
-						},
-					},
-				},
-			},
-			nil,
-			cipher.SHA256{},
-			nil,
-			nil,
-			nil,
-		},
-		{
-			"500 - GetUxOutByID error",
-			http.MethodGet,
-			"/explorer/address",
-			http.StatusInternalServerError,
-			"500 Internal Server Error",
-			address.String(),
-			&visor.TransactionResults{
-				Txns: []visor.TransactionResult{
-					{
-						Transaction: visor.ReadableTransaction{
-							In: []string{
-								validHash,
-							},
-						},
-					},
-				},
-			},
-			nil,
-			testutil.SHA256FromHex(t, validHash),
-			nil,
-			errors.New("gatewayGetUxOutByIDErr"),
-			nil,
-		},
-		{
-			"500 - GetUxOutByID nil result",
-			http.MethodGet,
-			"/explorer/address",
-			http.StatusInternalServerError,
-			"500 Internal Server Error",
-			address.String(),
-			&visor.TransactionResults{
-				Txns: []visor.TransactionResult{
-					{
-						Transaction: visor.ReadableTransaction{
-							In: []string{
-								validHash,
-							},
-						},
-					},
-				},
-			},
-			nil,
-			testutil.SHA256FromHex(t, validHash),
-			nil,
-			nil,
-			nil,
+			0,
+			errors.New("gatewayGetAddressCountErr"),
+			Result{},
 		},
 		{
 			"200",
 			http.MethodGet,
-			"/explorer/address",
+			"/addresscount",
 			http.StatusOK,
 			"",
-			address.String(),
-			&visor.TransactionResults{
-				Txns: []visor.TransactionResult{
-					{
-						Transaction: visor.ReadableTransaction{
-							In: []string{
-								validHash,
-							},
-						},
-					},
-				},
-			},
+			1,
 			nil,
-			testutil.SHA256FromHex(t, validHash),
-			&historydb.UxOut{},
-			nil,
-			[]ReadableTransaction{
-				{
-					In: []visor.ReadableTransactionInput{
-						{
-							Hash:    validHash,
-							Address: successAddress,
-						},
-					},
-				},
+			Result{
+				Count: 1,
 			},
 		},
 	}
@@ -218,24 +88,13 @@ func TestGetTransactionsForAddress(t *testing.T) {
 			gateway := &FakeGateway{
 				t: t,
 			}
-			gateway.On("GetAddressTxns", address).Return(tc.gatewayGetAddressTxnsResult, tc.gatewayGetAddressTxnsErr)
-			gateway.On("GetUxOutByID", tc.gatewayGetUxOutByIDArg).Return(tc.gatewayGetUxOutByIDResult, tc.gatewayGetUxOutByIDErr)
+			gateway.On("GetAddressCount").Return(tc.gatewayGetAddressCountResult, tc.gatewayGetAddressCountErr)
 
-			v := url.Values{}
-			var urlFull = tc.url
-			if tc.addressParam != "" {
-				v.Add("address", tc.addressParam)
-			}
-
-			if len(v) > 0 {
-				urlFull += "?" + v.Encode()
-			}
-
-			req, err := http.NewRequest(tc.method, urlFull, nil)
+			req, err := http.NewRequest(tc.method, tc.url, nil)
 			require.NoError(t, err)
 
 			rr := httptest.NewRecorder()
-			handler := http.HandlerFunc(getTransactionsForAddress(gateway))
+			handler := http.HandlerFunc(getAddressCount(gateway))
 
 			handler.ServeHTTP(rr, req)
 
@@ -246,7 +105,7 @@ func TestGetTransactionsForAddress(t *testing.T) {
 				require.Equal(t, tc.err, strings.TrimSpace(rr.Body.String()), "case: %s, handler returned wrong error message: got `%v`| %s, want `%v`",
 					tc.name, strings.TrimSpace(rr.Body.String()), status, tc.err)
 			} else {
-				var msg []ReadableTransaction
+				var msg Result
 				err := json.Unmarshal(rr.Body.Bytes(), &msg)
 				require.NoError(t, err)
 				require.Equal(t, tc.result, msg)
